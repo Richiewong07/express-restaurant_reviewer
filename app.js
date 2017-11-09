@@ -18,59 +18,6 @@ app.get('/', function(req, resp) {
 });
 
 
-
-
-// app.get('/search', function(request, response, next) {
-//   var searchTerm = request.query.searchTerm;
-//   console.log('Search Term:', searchTerm)
-//   db.any(`
-//     SELECT * FROM restaurant
-//     WHERE restaurant.category ILIKE '%${searchTerm}%'
-//     `)
-//     .then(function(results) {
-//       console.log('Restaurant Details:', results)
-//       response.render('search_results.hbs', {
-//         results: results
-//     });
-//   })
-//   .catch(next);
-// })
-
-// app.get('/restaurant/:id', function(request, response, next) {
-//   var id = request.params.id;
-//   db.any(`
-//     SELECT
-//       restaurant.name AS restaurant_name,
-//       restaurant.address,
-//       restaurant.category,
-//       reviewer.name AS reviewer_name,
-//       review.title,
-//       review.stars,
-//       review.review
-//     FROM
-//       restaurant
-//     LEFT OUTER JOIN
-//       review on review.restaurant_id = restaurant.id
-//     LEFT OUTER JOIN
-//       reviewer on review.reviewer_id = reviewer.id
-//     WHERE
-//       restaurant.id = ${id}
-//     `)
-//     .then(function(reviews) {
-//       console.log("Reviews Info", reviews)
-//       response.render('restaurant.hbs', {
-//         restaurant: reviews[0],
-//         reviews: reviews
-//       })
-//     })
-//     .catch(next);
-// });
-
-
-
-
-// santitize your inputs
-
 app.get('/search', function(req, resp, next) {
   let searchTerm = req.query.searchTerm;
   console.log('Search Term:', searchTerm)
@@ -86,59 +33,83 @@ app.get('/search', function(req, resp, next) {
     .catch(next);
 });
 
+
+
+app.get('/submit_review', function(req, resp) {
+  var id = req.query.id;
+  console.log(id);
+  resp.render('submit_review.hbs' , {id: id})
+});
+
+app.post('/submit_review', function(req, resp, next) {
+  var id = req.body.id;
+  var stars = req.body.stars;
+  var title = req.body.title;
+  var review = req.body.review;
+  var columns = {
+    stars: stars,
+    title: title,
+    review: review,
+    restaurant_id: id
+  }
+  console.log(id);
+  var query = 'INSERT INTO review VALUES\
+    (DEFAULT, NULL, ${stars}, ${title}, ${review}, ${restaurant_id}) RETURNING id';
+  db.any(query, columns)
+    .then(function(results) {
+      console.log(results)
+      resp.redirect('/restaurant/' + id);
+    })
+    .catch(next);
+});
+
+
 app.get('/restaurant/new', function(req, resp) {
   resp.render('new.hbs')
 });
+
 
 app.post('/restaurant/submit_new', function(req, resp, next) {
   var name = req.body.name;
   var address = req.body.address;
   var category = req.body.category;
-  var query = `INSERT INTO restaurant VALUES (DEFAULT, '${name}', '${address}', '${category}') RETURNING id`;
+  var query = 'INSERT INTO restaurant VALUES (DEFAULT, ${name}, ${address}, ${category}) RETURNING id';
   db.one(query)
-    .then(function(restaurant) {
-      resp.redirect('/restaurant/' + restaurant.id)
+    .then(function(results) {
+      console.log("Restaurant ID:", results.id)
+      resp.redirect('/restaurant/' + results.id)
     })
   .catch(next);
 });
 
 
+
 app.get('/restaurant/:id', function(req, resp, next) {
-  let id = req.params.id;
-  var query1 = db.one("\
-    SELECT restaurant.name AS restaurant_name, * FROM restaurant \
-    WHERE id = $1", id);
-  var query2 = db.any("\
-    SELECT reviewer.name AS reviewer_name, * FROM review\
-    INNER JOIN reviewer ON review.reviewer_id = reviewer.id\
-    WHERE review.restaurant_id = $1", id);
-  return Promise.all([query1, query2])
-    .then(function(reviews) {
-      console.log("Reviews Info", reviews)
+  var id = req.params.id;
+  var q = 'SELECT restaurant.id, restaurant.name AS restaurant_name, restaurant.address, restaurant.category, \
+  review.stars, review.title, review.review, reviewer.name AS reviewer_name,reviewer.email, reviewer.karma from restaurant \
+  LEFT JOIN review ON restaurant.id = review.restaurant_id \
+  LEFT JOIN reviewer ON reviewer.id = review.reviewer_id \
+  WHERE restaurant.id = $1';
+  console.log('My ID is ' +  id);
+  db.any(q,id)
+    .then(function(results) {
+      console.log("Restaurant and Reviews Info", results)
       resp.render('restaurant.hbs', {
-        restaurant: reviews[0],
-        reviews: reviews[1]
+        results: results
       })
     })
     .catch(next);
 })
 
-app.post('/restaurant/:id', function(req, resp, next) {
-  var restaurant_id = req.params.id;
-  var name = req.body.name;
-  var stars = req.body.stars;
-  var title = req.body.title;
-  var review = req.body.review;
-  var query1 = `INSERT INTO reviewer VALUES (DEFAULT, '${name}')`;
-  var query2 = `INSERT INTO review VALUES
-    (DEFAULT, NULL, ${stars}, '${title}', '${review}', ${restaurant_id})`;
-  db.none(query1, query2)
-    .then(function(results) {
-      resp.redirect('/restaurant/' + restaurant_id);
-    })
-    .catch(next);
-});
-
+// var query1 = db.one("\
+//   SELECT restaurant.name AS restaurant_name, * FROM restaurant \
+//   WHERE id = $1", id);
+// var query2 = db.any("\
+//   SELECT reviewer.name AS reviewer_name, * FROM review\
+//   INNER JOIN reviewer ON review.reviewer_id = reviewer.id\
+//   WHERE review.restaurant_id = $1", id);
+// return Promise.all([query1, query2])
 
 
 app.listen(8000, function () {

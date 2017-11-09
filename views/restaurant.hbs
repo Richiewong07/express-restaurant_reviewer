@@ -1,36 +1,24 @@
 
+<h1>{{results.[0].id}}</h1>
 
-<h1>{{restaurant.restaurant_name}}</h1>
-<p>Address: {{restaurant.address}}</p>
-<p>Category: {{restaurant.category}}</p>
+<h1>{{results.[0].restaurant_name}}</h1>
+<p>Address: {{results.[0].address}}</p>
+<p>Category: {{results.[0].category}}</p>
 
 
 <!-- multiple reviews per restaurant -->
-{{#if reviews}}
+
   <h2>Reviews</h2>
-  {{#each reviews}}
+  {{#each results}}
     <h3>{{title}}</h3>
-    <p>Name: {{reviewer_name}}</p>
+    <!-- <p>Name: {{reviewer_name}}</p> -->
     <p>Stars: {{stars}}</p>
     <p>Review: {{review}}</p>
   {{/each}}
-{{/if}}
 
 
-<h1>Submit Review:</h1>
 
-<form action="/restaurant/{{restaurant.id}}" method="POST">
-  <label>Reviewer Name:</label>
-  <input type="text" name="name" required>
-  </br>
-  <label>New Review:</label>
-  <input type="text" name="title" required>
-  <br />
-  <label>Review Comment: </label>
-  <input type="text" name="review" required>
-  <br />
-  <label>Number of Stars: </label>
-  <input type="text" name="stars" required>
-  <br />
+<form action="/submit_review" method="GET">
+  <input type="hidden" name="id" value="{{results.[0].id}}">
   <button type="submit">Submit</button>
 </form>

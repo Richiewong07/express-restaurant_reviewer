@@ -1,12 +1,20 @@
 <h1>Submit Review:</h1>
 
-<form action="/submit_review/" method="POST">
+{{id}}
+
+<form action="/submit_review" method="POST">
+  <!-- <label>Reviewer Name:</label>
+  <input type="text" name="name" required>
+  </br> -->
   <label>New Review:</label>
-  <input type="text" name="submit_review" required>
-  <br><br>
-  <label>Review Title: </label>
-  <input type="text" name="title" required>
-  <label>Review: </label>
+  <input type="text" name="title" required></input>
+  <br />
+  <label>Review Comment: </label>
+  <input type="text" name="review" required></input>
+  <br />
   <label>Number of Stars: </label>
+  <input type="text" name="stars" required></input>
+  <br />
+  <input type="hidden" name="id" value="{{id}}"></input>
   <button type="submit">Submit</button>
 </form>
