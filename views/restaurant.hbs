@@ -1,0 +1,36 @@
+
+
+<h1>{{restaurant.restaurant_name}}</h1>
+<p>Address: {{restaurant.address}}</p>
+<p>Category: {{restaurant.category}}</p>
+
+
+<!-- multiple reviews per restaurant -->
+{{#if reviews}}
+  <h2>Reviews</h2>
+  {{#each reviews}}
+    <h3>{{title}}</h3>
+    <p>Name: {{reviewer_name}}</p>
+    <p>Stars: {{stars}}</p>
+    <p>Review: {{review}}</p>
+  {{/each}}
+{{/if}}
+
+
+<h1>Submit Review:</h1>
+
+<form action="/restaurant/{{restaurant.id}}" method="POST">
+  <label>Reviewer Name:</label>
+  <input type="text" name="name" required>
+  </br>
+  <label>New Review:</label>
+  <input type="text" name="title" required>
+  <br />
+  <label>Review Comment: </label>
+  <input type="text" name="review" required>
+  <br />
+  <label>Number of Stars: </label>
+  <input type="text" name="stars" required>
+  <br />
+  <button type="submit">Submit</button>
+</form>
