@@ -102,15 +102,6 @@ app.get('/restaurant/:id', function(req, resp, next) {
     .catch(next);
 })
 
-// var query1 = db.one("\
-//   SELECT restaurant.name AS restaurant_name, * FROM restaurant \
-//   WHERE id = $1", id);
-// var query2 = db.any("\
-//   SELECT reviewer.name AS reviewer_name, * FROM review\
-//   INNER JOIN reviewer ON review.reviewer_id = reviewer.id\
-//   WHERE review.restaurant_id = $1", id);
-// return Promise.all([query1, query2])
-
 
 app.listen(8000, function () {
   console.log('Listening on port 8000');
