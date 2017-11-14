@@ -1,28 +1,53 @@
 var express = require('express');
-var app = express();
 var body_parser = require('body-parser');
+var morgan = require('morgan');
+var session = require('express-session');
+var apicache = require('apicache');
+var cache = apicache.middleware;
+
+var app = express();
+
 var pgp = require('pg-promise')({
   promiseLib: Promise
 });
 
 var db = pgp({database: 'restaurantv2'});
 
-
 app.set('view engine', 'hbs');
+
+app.use(session({
+  secret: process.env.SECRET_KEY || 'dev',
+  resave: true,
+  saveUninitialized: false,
+  cookie: {maxAge: 60000}
+}));
+
 app.use('/static', express.static('public'));
 app.use(body_parser.urlencoded({extended: false}));
+
+app.use(morgan('dev'));
+
+
+// app.use(function (req, resp, next) {
+//   if (req.session.user) {
+//     next();
+//   } else if (req.path == '/login' || req.path == '/api') {
+//     next();
+//   } else {
+//     resp.redirect('/login');
+//   }
+// });
 
 
 app.get('/', function(req, resp) {
   resp.render('search.hbs');
 });
 
-
 app.get('/search', function(req, resp, next) {
   let searchTerm = req.query.searchTerm;
   console.log('Search Term:', searchTerm)
-  var query = "SELECT * FROM restaurant WHERE restaurant.name ILIKE '%$1#%'";
-  db.any(query, searchTerm)
+  var q = "SELECT * FROM restaurant WHERE restaurant.name ILIKE '%$1#%'";
+  db.any(q, searchTerm)
     .then(function(resultsArray) {
       var context = {
         title: 'Search Results',
@@ -34,12 +59,12 @@ app.get('/search', function(req, resp, next) {
 });
 
 
-
 app.get('/submit_review', function(req, resp) {
   var id = req.query.id;
   console.log(id);
   resp.render('submit_review.hbs' , {id: id})
 });
+
 
 app.post('/submit_review', function(req, resp, next) {
   var id = req.body.id;
@@ -53,9 +78,9 @@ app.post('/submit_review', function(req, resp, next) {
     restaurant_id: id
   }
   console.log(id);
-  var query = 'INSERT INTO review VALUES\
+  var q = 'INSERT INTO review VALUES\
     (DEFAULT, NULL, ${stars}, ${title}, ${review}, ${restaurant_id}) RETURNING id';
-  db.any(query, columns)
+  db.any(q, columns)
     .then(function(results) {
       console.log(results)
       resp.redirect('/restaurant/' + id);
@@ -73,15 +98,14 @@ app.post('/restaurant/submit_new', function(req, resp, next) {
   var name = req.body.name;
   var address = req.body.address;
   var category = req.body.category;
-  var query = 'INSERT INTO restaurant VALUES (DEFAULT, ${name}, ${address}, ${category}) RETURNING id';
-  db.one(query)
+  var q = 'INSERT INTO restaurant VALUES (DEFAULT, ${name}, ${address}, ${category}) RETURNING id';
+  db.one(q)
     .then(function(results) {
       console.log("Restaurant ID:", results.id)
       resp.redirect('/restaurant/' + results.id)
     })
   .catch(next);
 });
-
 
 
 app.get('/restaurant/:id', function(req, resp, next) {
@@ -101,6 +125,29 @@ app.get('/restaurant/:id', function(req, resp, next) {
     })
     .catch(next);
 })
+
+
+app.get('/login', function (req, resp) {
+  resp.render('login.hbs');
+});
+
+app.post('/login', function (req, resp, next) {
+  var user = req.body.email;
+  var password = req.body.password;
+  console.log(user, password)
+  var q = "SELECT * FROM reviewer WHERE reviewer.email = '${user}'";
+  db.any(q, password)
+    .then(function(results) {
+      console.log(results)
+      if (results.password === password) {
+        req.session.user = user;
+        resp.redirect('/');
+      } else {
+        resp.render('login.hbs');
+      }
+    })
+    .catch(next);
+});
 
 
 app.listen(8000, function () {
