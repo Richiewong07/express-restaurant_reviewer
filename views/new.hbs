@@ -1,6 +1,10 @@
 
 <h1>Add New Restaurant:</h1>
 
+{{#if name }}
+  Hello {{name}}
+{{/if}}
+
 <form action="/restaurant/submit_new" method="POST">
   <label>Restaurant Name:</label>
   <input type="text" name="name" required>

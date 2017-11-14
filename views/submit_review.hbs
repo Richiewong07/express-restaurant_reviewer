@@ -1,6 +1,8 @@
 <h1>Submit Review:</h1>
 
-{{id}}
+{{#if name }}
+  Hello {{name}}
+{{/if}}
 
 <form action="/submit_review" method="POST">
   <!-- <label>Reviewer Name:</label>

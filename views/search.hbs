@@ -1,5 +1,9 @@
 <h1>Search:</h1>
 
+{{#if name }}
+  Hello {{name}}
+{{/if}}
+
 <form action="/search" method="GET">
   <label>New Search:</label>
   <input type="text" name="searchTerm" required>

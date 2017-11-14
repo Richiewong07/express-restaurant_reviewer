@@ -28,19 +28,19 @@ app.use(body_parser.urlencoded({extended: false}));
 app.use(morgan('dev'));
 
 
-// app.use(function (req, resp, next) {
-//   if (req.session.user) {
-//     next();
-//   } else if (req.path == '/login' || req.path == '/api') {
-//     next();
-//   } else {
-//     resp.redirect('/login');
-//   }
-// });
+app.use(function (req, resp, next) {
+  if (req.session.user) {
+    next();
+  } else if (req.path == '/login') {
+    next();
+  } else {
+    resp.redirect('/login');
+  }
+});
 
 
 app.get('/', function(req, resp) {
-  resp.render('search.hbs');
+  resp.render('search.hbs', {name: req.session.login});
 });
 
 app.get('/search', function(req, resp, next) {
@@ -51,7 +51,8 @@ app.get('/search', function(req, resp, next) {
     .then(function(resultsArray) {
       var context = {
         title: 'Search Results',
-        results: resultsArray
+        results: resultsArray,
+        name: req.session.login
       };
       resp.render('search_results.hbs', context);
     })
@@ -62,7 +63,7 @@ app.get('/search', function(req, resp, next) {
 app.get('/submit_review', function(req, resp) {
   var id = req.query.id;
   console.log(id);
-  resp.render('submit_review.hbs' , {id: id})
+  resp.render('submit_review.hbs' , {id: id, name: req.session.user})
 });
 
 
@@ -90,7 +91,7 @@ app.post('/submit_review', function(req, resp, next) {
 
 
 app.get('/restaurant/new', function(req, resp) {
-  resp.render('new.hbs')
+  resp.render('new.hbs', {name: req.session.login})
 });
 
 
@@ -98,8 +99,13 @@ app.post('/restaurant/submit_new', function(req, resp, next) {
   var name = req.body.name;
   var address = req.body.address;
   var category = req.body.category;
+  var columns = {
+    name: name,
+    address: address,
+    category, category
+  }
   var q = 'INSERT INTO restaurant VALUES (DEFAULT, ${name}, ${address}, ${category}) RETURNING id';
-  db.one(q)
+  db.one(q, columns)
     .then(function(results) {
       console.log("Restaurant ID:", results.id)
       resp.redirect('/restaurant/' + results.id)
@@ -120,7 +126,8 @@ app.get('/restaurant/:id', function(req, resp, next) {
     .then(function(results) {
       console.log("Restaurant and Reviews Info", results)
       resp.render('restaurant.hbs', {
-        results: results
+        results: results,
+        name: req.session.login
       })
     })
     .catch(next);
@@ -135,12 +142,15 @@ app.post('/login', function (req, resp, next) {
   var user = req.body.email;
   var password = req.body.password;
   console.log(user, password)
-  var q = "SELECT * FROM reviewer WHERE reviewer.email = '${user}'";
-  db.any(q, password)
+  var q = 'SELECT * FROM reviewer WHERE reviewer.email = $1';
+  db.one(q, user)
     .then(function(results) {
-      console.log(results)
-      if (results.password === password) {
+      console.log(results);
+      console.log(password);
+      if (results.password == password) {
         req.session.user = user;
+        req.session.login = results.name;
+        console.log(results.name);
         resp.redirect('/');
       } else {
         resp.render('login.hbs');
