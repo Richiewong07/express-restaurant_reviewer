@@ -6,18 +6,22 @@
 <h1>{{results.[0].id}}</h1>
 
 <h1>{{results.[0].restaurant_name}}</h1>
-<p>Address: {{results.[0].address}}</p>
-<p>Category: {{results.[0].category}}</p>
+Address: {{results.[0].address}}
+<br />
+Category: {{results.[0].category}}
+<br />
 
 
 <!-- multiple reviews per restaurant -->
 
   <h2>Reviews</h2>
   {{#each results}}
-    <h3>{{title}}</h3>
+  <p>
+      <strong>{{title}}</strong>
     <!-- <p>Name: {{reviewer_name}}</p> -->
-    <p>Stars: {{stars}}</p>
-    <p>Review: {{review}}</p>
+    Stars: {{stars}}
+    Review: {{review}}
+    </p>
   {{/each}}
 
 

@@ -1,7 +1,13 @@
 <h1>Search:</h1>
 
 {{#if name }}
-  Hello {{name}}
+  </pr>Hello {{name}}
+  <br />
+  <br />
+  <form action="/logout" method="POST">
+    <input type="submit" value="Logout">
+  </form>
+  <br />
 {{/if}}
 
 <form action="/search" method="GET">

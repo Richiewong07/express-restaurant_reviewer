@@ -62,6 +62,7 @@ app.get('/search', function(req, resp, next) {
 
 app.get('/submit_review', function(req, resp) {
   var id = req.query.id;
+  var context = 
   console.log(id);
   resp.render('submit_review.hbs' , {id: id, name: req.session.user})
 });
@@ -76,11 +77,12 @@ app.post('/submit_review', function(req, resp, next) {
     stars: stars,
     title: title,
     review: review,
-    restaurant_id: id
+    restaurant_id: id,
+    reviewer_id: req.session.reviwer_id
   }
   console.log(id);
   var q = 'INSERT INTO review VALUES\
-    (DEFAULT, NULL, ${stars}, ${title}, ${review}, ${restaurant_id}) RETURNING id';
+    (DEFAULT, ${reviewer_id}, ${stars}, ${title}, ${review}, ${restaurant_id}) RETURNING id';
   db.any(q, columns)
     .then(function(results) {
       console.log(results)
@@ -150,13 +152,20 @@ app.post('/login', function (req, resp, next) {
       if (results.password == password) {
         req.session.user = user;
         req.session.login = results.name;
-        console.log(results.name);
+        req.session.reviwer_id = results.id
+        console.log(results.id);
         resp.redirect('/');
       } else {
         resp.render('login.hbs');
       }
     })
     .catch(next);
+});
+
+app.post('/logout', function (req, resp, next) {
+  req.session.user = ' ';
+  req.session.password = ' ';
+  resp.redirect('/login');
 });
 
 
